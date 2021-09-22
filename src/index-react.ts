@@ -1,13 +1,12 @@
-
-import { unstable_batchedUpdates as batch } from "./utils/reactBatchedUpdates"
-import { observerBatching } from "./utils/observerBatching"
+import { unstable_batchedUpdates } from "react-dom"
+import { observerBatching } from "./toreact/observerBatching"
 
 import { forwardRef, memo } from "react"
 
-import { useObserver } from "./useObserver"
+import { useObserver } from "./toreact/useObserver"
 
-
-observerBatching(batch)
+// 启用批量更新
+observerBatching(unstable_batchedUpdates)
 
 export interface IObserverOptions {
     readonly forwardRef?: boolean

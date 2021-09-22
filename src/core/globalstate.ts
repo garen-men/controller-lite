@@ -1,4 +1,4 @@
-import { Reaction, die, getGlobal } from "../internal"
+// import { Reaction, die, getGlobal } from "../internal"
 import { ComputedValue } from "./computedvalue"
 
 /**

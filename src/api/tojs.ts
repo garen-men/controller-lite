@@ -1,3 +1,13 @@
+// import {
+//     isObservable,
+//     isObservableArray,
+//     isObservableValue,
+//     isObservableMap,
+//     isObservableSet,
+//     isComputedValue,
+//     apiOwnKeys,
+//     objectPrototype
+// } from "../internal"
 
 function cache<K, V>(map: Map<any, any>, key: K, value: V): V {
     map.set(key, value)

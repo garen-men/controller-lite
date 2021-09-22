@@ -11,3 +11,5 @@
 仅支持react类组件和纯函数组件 hooks待观察
 
 暂不支持SSR
+
+unstable_batchedUpdates 是react内部不稳定方法, 将来可能会变

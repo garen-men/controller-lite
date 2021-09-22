@@ -1,3 +1,4 @@
+import { Reaction } from "../core/reaction"
 import { EMPTY_OBJECT } from "../utils/utils"
 
 export interface IAutorunOptions {
