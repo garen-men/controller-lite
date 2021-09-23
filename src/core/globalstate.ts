@@ -1,5 +1,4 @@
-// import { Reaction, die, getGlobal } from "../internal"
-import { ComputedValue } from "./computedvalue"
+import { getGlobal } from "../utils/global"
 
 /**
  * These values will persist if global state is reset
@@ -46,7 +45,7 @@ export class MobXGlobals {
      * (Tracking derivation is also set for temporal tracking of computed values inside actions,
      * but trackingReaction can only be set by a form of Reaction)
      */
-    trackingContext: Reaction | ComputedValue<any> | null = null
+    trackingContext: any = null
 
     /**
      * Each time a derivation is tracked, it is assigned a unique run-id
@@ -74,7 +73,7 @@ export class MobXGlobals {
     /**
      * List of scheduled, not yet executed, reactions.
      */
-    pendingReactions: Reaction[] = []
+    pendingReactions: any = []
 
     /**
      * Are we currently processing reactions?
@@ -162,11 +161,6 @@ export let globalState: MobXGlobals = (function () {
         canMergeGlobalState = false
 
     if (!canMergeGlobalState) {
-        setTimeout(() => {
-            if (!isolateCalled) {
-                die(35)
-            }
-        }, 1)
         return new MobXGlobals()
     } else if (global.__mobxGlobals) {
         global.__mobxInstanceCount += 1
@@ -179,12 +173,12 @@ export let globalState: MobXGlobals = (function () {
 })()
 
 export function isolateGlobalState() {
-    if (
-        globalState.pendingReactions.length ||
-        globalState.inBatch ||
-        globalState.isRunningReactions
-    )
-        die(36)
+    // if (
+    //     globalState.pendingReactions.length ||
+    //     globalState.inBatch ||
+    //     globalState.isRunningReactions
+    // )
+    //     die(36)
     isolateCalled = true
     if (canMergeGlobalState) {
         let global = getGlobal()

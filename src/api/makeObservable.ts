@@ -1,22 +1,15 @@
 
 import { $mobx } from "../core/atom"
 import { endBatch, startBatch } from "../core/observable"
-import { extendObservable } from "../interapi/extendobservable"
 import { asObservableObject } from "../types/observableobject"
-import { addHiddenProp, isPlainObject, ownKeys } from "../utils/utils"
+import { addHiddenProp, ownKeys } from "../utils/utils"
 
 const keysSymbol = Symbol("mobx-keys")
 
-export function makeAutoObservable<T extends object, AdditionalKeys extends PropertyKey = never>(
-    target: T,
+export function makeAutoObservable(
+    target: any,
     overrides?: any,
-): T {
-
-    // Optimization: avoid visiting protos
-    // Assumes that annotation.make_/.extend_ works the same for plain objects
-    if (isPlainObject(target)) {
-        return extendObservable(target, target, overrides)
-    }
+): any {
 
     const adm = asObservableObject(target)[$mobx]
 
@@ -32,7 +25,7 @@ export function makeAutoObservable<T extends object, AdditionalKeys extends Prop
 
     startBatch()
     try {
-        target[keysSymbol].forEach(key =>
+        target[keysSymbol].forEach((key:any) =>
             adm.make_(
                 key,
                 // must pass "undefined" for { key: undefined }

@@ -22,13 +22,6 @@ export class ObservableObjectAdministration {
         this.keysAtom_ = new Atom(__DEV__ ? `${this.name_}.keys` : "ObservableObject.keys")
         // Optimization: we use this frequently
         this.isPlainObject_ = isPlainObject(this.target_)
-        if (__DEV__ && !isAnnotation(this.defaultAnnotation_)) {
-            die(`defaultAnnotation must be valid annotation`)
-        }
-        if (__DEV__) {
-            // Prepare structure for tracking which fields were already annotated
-            this.appliedAnnotations_ = {}
-        }
     }
 
     getObservablePropValue_(key: PropertyKey): any {
@@ -58,7 +51,6 @@ export class ObservableObjectAdministration {
         // notify spy & observers
         if (newValue !== globalState.UNCHANGED) {
             const notify = hasListeners(this)
-            const notifySpy = __DEV__ && isSpyEnabled()
             const change: IObjectDidChange | null =
                 notify || notifySpy
                     ? {
@@ -72,10 +64,8 @@ export class ObservableObjectAdministration {
                     }
                     : null
 
-            if (__DEV__ && notifySpy) spyReportStart(change!)
                 ; (observable as ObservableValue<any>).setNewValue_(newValue)
             if (notify) notifyListeners(this, change)
-            if (__DEV__ && notifySpy) spyReportEnd()
         }
         return true
     }

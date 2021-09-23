@@ -17,7 +17,7 @@ export function endBatch() {
         // the batch is actually about to finish, all unobserving should happen here.
         const list = globalState.pendingUnobservations
         for (let i = 0; i < list.length; i++) {
-            const observable = list[i]
+            const observable:any = list[i]
             observable.isPendingUnobservation_ = false
             if (observable.observers_.size === 0) {
                 if (observable.isBeingObserved_) {
