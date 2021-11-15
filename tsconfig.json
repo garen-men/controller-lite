@@ -11,7 +11,9 @@
         "declaration": true,
         "outDir": "build",
         "strict": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "jsx": "react",
+        "noImplicitThis":false,
     },
     "exclude": [
         "node_modules",

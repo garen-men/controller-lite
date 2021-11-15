@@ -1,2 +1,2 @@
 
-export { observer } from "./observer"
+export { observer } from "./toreact/observer"

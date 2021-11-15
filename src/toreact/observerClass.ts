@@ -1,13 +1,14 @@
 import { PureComponent, Component } from "react"
 import {
-    createAtom,
-    _allowStateChanges,
-    Reaction,
+    // createAtom,
+    // _allowStateChanges,
     $mobx,
-    _allowStateReadsStart,
-    _allowStateReadsEnd
-} from "mobx"
-import { isUsingStaticRendering } from "mobx-react-lite"
+    // _allowStateReadsStart,
+    // _allowStateReadsEnd
+} from "../core/atom"
+import {
+    Reaction,
+} from "../core/reaction"
 
 import { newSymbol, shallowEqual, setHiddenProp, patch } from "./utils/utils"
 
@@ -18,8 +19,8 @@ const skipRenderKey = newSymbol("skipRender")
 const isForcingUpdateKey = newSymbol("isForcingUpdate")
 
 export function makeClassComponentObserver(
-    componentClass: React.ComponentClass<any, any>
-): React.ComponentClass<any, any> {
+    componentClass: any
+): any {
     const target = componentClass.prototype
 
     if (componentClass[mobxObserverProperty]) {
@@ -63,7 +64,7 @@ export function makeClassComponentObserver(
         return makeComponentReactive.call(this, baseRender)
     }
     patch(target, "componentWillUnmount", function () {
-        if (isUsingStaticRendering() === true) return
+
         this.render[mobxAdminProperty]?.dispose()
         this[mobxIsUnmounted] = true
 
@@ -91,7 +92,6 @@ function getDisplayName(comp: any) {
 }
 
 function makeComponentReactive(render: any) {
-    if (isUsingStaticRendering() === true) return render.call(this)
 
     /**
      * If props are shallowly modified, react will render anyway,
@@ -153,12 +153,8 @@ function makeComponentReactive(render: any) {
     return reactiveRender.call(this)
 }
 
-function observerSCU(nextProps: React.Props<any>, nextState: any): boolean {
-    if (isUsingStaticRendering()) {
-        console.warn(
-            "[mobx-react] It seems that a re-rendering of a React component is triggered while in static (server-side) mode. Please make sure components are rendered only once server-side."
-        )
-    }
+function observerSCU(nextProps: any, nextState: any): boolean {
+
     // update on any state changes (as is the default)
     if (this.state !== nextState) {
         return true

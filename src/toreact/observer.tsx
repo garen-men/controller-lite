@@ -1,4 +1,5 @@
 import * as React from "react"
+
 import { observer as observerLite } from "../index-react-lite"
 
 import { makeClassComponentObserver } from "./observerClass"
@@ -11,15 +12,10 @@ const ReactMemoSymbol = hasSymbol
 
 
 export function observer(component:any){
-    if (component["isMobxInjector"] === true) {
-        console.warn(
-            "Mobx observer: You are trying to use 'observer' on a component that already has 'inject'. Please apply 'observer' before applying 'inject'"
-        )
-    }
 
     if (ReactMemoSymbol && component["$$typeof"] === ReactMemoSymbol) {
         throw new Error(
-            "Mobx observer: You are trying to use 'observer' on a function component wrapped in either another observer or 'React.memo'. The observer already applies 'React.memo' for you."
+            "使用observer后不需要使用memo"
         )
     }
 
@@ -34,7 +30,7 @@ export function observer(component:any){
     //     }) as T
     // }
 
-    // Function component
+    // 验证是函数组件 还是类组件
     if (
         typeof component === "function" &&
         (!component.prototype || !component.prototype.render) &&
