@@ -3,7 +3,7 @@ import {
     // toJS,
     makeAutoObservable,
 } from "./index-mobx";
-import { observer } from "./index-react-lite";
+import { observer } from "./index-react";
 
 
 export {
