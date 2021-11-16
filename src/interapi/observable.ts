@@ -206,5 +206,4 @@ const observableFactories: IObservableFactory = {
     struct: createDecoratorAnnotation(observableStructAnnotation)
 } as any
 
-// eslint-disable-next-line
-export var observable: IObservableFactory = assign(createObservable, observableFactories)
+export const observable: IObservableFactory = assign(createObservable, observableFactories)

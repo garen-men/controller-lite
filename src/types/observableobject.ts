@@ -1,5 +1,7 @@
-import { $mobx } from "../core/atom"
-import { addHiddenProp, hasProp, ownKeys } from "../utils/utils"
+import { $mobx, Atom } from "../core/atom"
+import { globalState } from "../core/globalstate"
+import { endBatch } from "../core/observable"
+import { addHiddenProp, hasProp, isPlainObject, ownKeys } from "../utils/utils"
 
 
 
@@ -19,7 +21,7 @@ export class ObservableObjectAdministration {
         // Used anytime annotation is not explicitely provided
         public defaultAnnotation_: Annotation = autoAnnotation
     ) {
-        this.keysAtom_ = new Atom(__DEV__ ? `${this.name_}.keys` : "ObservableObject.keys")
+        this.keysAtom_ = new Atom("ObservableObject.keys")
         // Optimization: we use this frequently
         this.isPlainObject_ = isPlainObject(this.target_)
     }

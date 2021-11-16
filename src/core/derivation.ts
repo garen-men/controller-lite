@@ -147,13 +147,6 @@ export function checkIfStateModificationsAreAllowed(atom: IAtom) {
         )
 }
 
-export function checkIfStateReadsAreAllowed(observable: IObservable) {
-    if (__DEV__ && !globalState.allowStateReads && globalState.observableRequiresReaction) {
-        console.warn(
-            `[mobx] Observable '${observable.name_}' being read outside a reactive context.`
-        )
-    }
-}
 
 /**
  * Executes the provided function `f` and tracks which observables are being accessed.

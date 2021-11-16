@@ -1,16 +1,13 @@
 import { PureComponent, Component } from "react"
 import {
-    // createAtom,
-    // _allowStateChanges,
+    createAtom,
     $mobx,
-    // _allowStateReadsStart,
-    // _allowStateReadsEnd
 } from "../core/atom"
 import {
     Reaction,
 } from "../core/reaction"
 
-import { newSymbol, shallowEqual, setHiddenProp, patch } from "./utils/utils"
+import { newSymbol, shallowEqual, setHiddenProp, patch } from "../utils/reactUtils"
 
 const mobxAdminProperty = $mobx || "$mobx"
 const mobxObserverProperty = newSymbol("isMobXReactObserver")
@@ -33,8 +30,6 @@ export function makeClassComponentObserver(
         componentClass[mobxObserverProperty] = true
     }
 
-    if (target.componentWillReact)
-        throw new Error("The componentWillReact life-cycle event is no longer supported")
     if (componentClass["__proto__"] !== PureComponent) {
         if (!target.shouldComponentUpdate) target.shouldComponentUpdate = observerSCU
         else if (target.shouldComponentUpdate !== observerSCU)
@@ -52,14 +47,7 @@ export function makeClassComponentObserver(
     makeObservableProp(target, "state")
 
     const baseRender = target.render
-    if (typeof baseRender !== 'function') {
-        const displayName = getDisplayName(target)
-        throw new Error(
-            `[mobx-react] class component (${displayName}) is missing \`render\` method.`
-            + `\n\`observer\` requires \`render\` being a function defined on prototype.`
-            + `\n\`render = () => {}\` or \`render = function() {}\` is not supported.`
-        )
-    }
+
     target.render = function () {
         return makeComponentReactive.call(this, baseRender)
     }
@@ -129,7 +117,7 @@ function makeComponentReactive(render: any) {
         }
     })
 
-    reaction["reactComponent"] = this
+    reaction["reactComponent"] = this;
     reactiveRender[mobxAdminProperty] = reaction
     this.render = reactiveRender
 
@@ -139,7 +127,7 @@ function makeComponentReactive(render: any) {
         let rendering = undefined
         reaction.track(() => {
             try {
-                rendering = _allowStateChanges(false, baseRender)
+                rendering = baseRender()
             } catch (e) {
                 exception = e
             }
@@ -179,17 +167,7 @@ function makeObservableProp(target: any, propName: string): void {
         configurable: true,
         enumerable: true,
         get: function () {
-            let prevReadState = false
-
-            if (_allowStateReadsStart && _allowStateReadsEnd) {
-                prevReadState = _allowStateReadsStart(true)
-            }
             getAtom.call(this).reportObserved()
-
-            if (_allowStateReadsStart && _allowStateReadsEnd) {
-                _allowStateReadsEnd(prevReadState)
-            }
-
             return this[valueHolderKey]
         },
         set: function set(v) {

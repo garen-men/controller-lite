@@ -1,4 +1,5 @@
 import { ComputedValue } from "./computedvalue"
+import { IDerivationState_ } from "./derivation"
 import { globalState } from "./globalstate"
 import { runReactions } from "./reaction"
 
@@ -33,5 +34,52 @@ export function endBatch() {
             }
         }
         globalState.pendingUnobservations = []
+    }
+}
+
+export function reportObserved(observable): boolean {
+
+    const derivation = globalState.trackingDerivation
+    if (derivation !== null) {
+        /**
+         * Simple optimization, give each derivation run an unique id (runId)
+         * Check if last time this observable was accessed the same runId is used
+         * if this is the case, the relation is already known
+         */
+        if (derivation.runId_ !== observable.lastAccessedBy_) {
+            observable.lastAccessedBy_ = derivation.runId_
+            // Tried storing newObserving, or observing, or both as Set, but performance didn't come close...
+            derivation.newObserving_![derivation.unboundDepsCount_++] = observable
+            if (!observable.isBeingObserved_ && globalState.trackingContext) {
+                observable.isBeingObserved_ = true
+                observable.onBO()
+            }
+        }
+        return true
+    } else if (observable.observers_.size === 0 && globalState.inBatch > 0) {
+        queueForUnobservation(observable)
+    }
+
+    return false
+}
+
+
+// Called by Atom when its value changes
+export function propagateChanged(observable) {
+    if (observable.lowestObserverState_ === IDerivationState_.STALE_) return
+    observable.lowestObserverState_ = IDerivationState_.STALE_
+
+    observable.observers_.forEach(d => {
+        if (d.dependenciesState_ === IDerivationState_.UP_TO_DATE_) {
+            d.onBecomeStale_()
+        }
+        d.dependenciesState_ = IDerivationState_.STALE_
+    })
+}
+export function queueForUnobservation(observable) {
+    if (observable.isPendingUnobservation_ === false) {
+        // invariant(observable._observers.length === 0, "INTERNAL ERROR, should only queue for unobservation unobserved observables");
+        observable.isPendingUnobservation_ = true
+        globalState.pendingUnobservations.push(observable)
     }
 }
