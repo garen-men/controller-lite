@@ -1,7 +1,7 @@
 import { $mobx, Atom } from "../core/atom"
 import { globalState } from "../core/globalstate"
-import { endBatch } from "../core/observable"
-import { addHiddenProp, hasProp, isPlainObject, ownKeys } from "../utils/utils"
+import { endBatch, startBatch } from "../core/observable"
+import { addHiddenProp, defineProperty, hasProp, isPlainObject, ownKeys } from "../utils/utils"
 
 
 
@@ -125,7 +125,7 @@ export class ObservableObjectAdministration {
             entry = new ObservableValue(
                 key in this.target_,
                 referenceEnhancer,
-                __DEV__ ? `${this.name_}.${stringifyKey(key)}?` : "ObservableObject.key?",
+                "ObservableObject.key?",
                 false
             )
             this.pendingKeys_.set(key, entry)
@@ -342,7 +342,7 @@ export class ObservableObjectAdministration {
                 })
                 if (!change) return null
             }
-            options.name ||= __DEV__ ? `${this.name_}.${key.toString()}` : "ObservableObject.key"
+            options.name ||= "ObservableObject.key"
             options.context = this.proxy_ || this.target_
             const cachedDescriptor = getCachedObservablePropDescriptor(key)
             const descriptor = {
@@ -519,17 +519,15 @@ export class ObservableObjectAdministration {
 export function asObservableObject(
     target: any,
 ): any {
-
+    // 如果已经被劫持了,直接返回
     if (hasProp(target, $mobx)) {
         return target
     }
 
-    const name = "ObservableObject"
-
     const adm = new ObservableObjectAdministration(
         target,
         new Map(),
-        String(name),
+        "ObservableObject",
     )
 
     addHiddenProp(target, $mobx, adm)
