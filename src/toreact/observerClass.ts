@@ -127,6 +127,7 @@ function makeComponentReactive(render: any) {
         let rendering = undefined
         reaction.track(() => {
             try {
+                // todo 这儿需要复刻 global false
                 rendering = baseRender()
             } catch (e) {
                 exception = e

@@ -18,6 +18,12 @@
  *
  */
 
+import { createInstanceofPredicate, Lambda } from "../utils/utils"
+import { clearObserving, IDerivation, isCaughtException, shouldCompute, trackDerivedFunction } from "./derivation"
+import { globalState } from "./globalstate"
+import { endBatch, startBatch } from "./observable"
+import { unstable_batchedUpdates } from "react-dom"
+
 export interface IReactionPublic {
     dispose(): void
     trace(enterBreakPoint?: boolean): void
@@ -42,7 +48,7 @@ export class Reaction{
     isTracing_: TraceMode = TraceMode.NONE
 
     constructor(
-        public name_: string = __DEV__ ? "Reaction@" + getNextId() : "Reaction",
+        public name_: string = "Reaction",
         private onInvalidate_: () => void,
         private errorHandler_?: (error: any, derivation: IDerivation) => void,
         public requiresObservable_ = false
@@ -78,13 +84,6 @@ export class Reaction{
 
                 try {
                     this.onInvalidate_()
-                    if (__DEV__ && this.isTrackPending_ && isSpyEnabled()) {
-                        // onInvalidate didn't trigger track right away..
-                        spyReport({
-                            name: this.name_,
-                            type: "scheduled-reaction"
-                        })
-                    }
                 } catch (e) {
                     this.reportExceptionInDerivation_(e)
                 }
@@ -100,15 +99,6 @@ export class Reaction{
             // console.warn("Reaction already disposed") // Note: Not a warning / error in mobx 4 either
         }
         startBatch()
-        const notify = isSpyEnabled()
-        let startTime
-        if (__DEV__ && notify) {
-            startTime = Date.now()
-            spyReportStart({
-                name: this.name_,
-                type: "reaction"
-            })
-        }
         this.isRunning_ = true
         const prevReaction = globalState.trackingContext // reactions could create reactions...
         globalState.trackingContext = this
@@ -121,11 +111,6 @@ export class Reaction{
             clearObserving(this)
         }
         if (isCaughtException(result)) this.reportExceptionInDerivation_(result.cause)
-        if (__DEV__ && notify) {
-            spyReportEnd({
-                time: Date.now() - startTime
-            })
-        }
         endBatch()
     }
 
@@ -144,15 +129,6 @@ export class Reaction{
             console.error(message, error)
             /** If debugging brought you here, please, read the above message :-). Tnx! */
         } else if (__DEV__) console.warn(`[mobx] (error in reaction '${this.name_}' suppressed, fix error of causing action below)`) // prettier-ignore
-
-        if (__DEV__ && isSpyEnabled()) {
-            spyReport({
-                type: "error",
-                name: this.name_,
-                message,
-                error: "" + error
-            })
-        }
 
         globalState.globalReactionErrorHandlers.forEach(f => f(error, this))
     }
@@ -199,12 +175,12 @@ export function onReactionError(handler: (error: any, derivation: IDerivation) =
  */
 const MAX_REACTION_ITERATIONS = 100
 
-let reactionScheduler: (fn: () => void) => void = f => f()
 
 export function runReactions() {
-    // Trampolining, if runReactions are already running, new reactions will be picked up
+    // 如果执行反应,那么新反应不会执行
     if (globalState.inBatch > 0 || globalState.isRunningReactions) return
-    reactionScheduler(runReactionsHelper)
+    // 启用REACT批量更新
+    unstable_batchedUpdates(() => runReactionsHelper())
 }
 
 function runReactionsHelper() {
@@ -218,10 +194,7 @@ function runReactionsHelper() {
     while (allReactions.length > 0) {
         if (++iterations === MAX_REACTION_ITERATIONS) {
             console.error(
-                __DEV__
-                    ? `Reaction doesn't converge to a stable state after ${MAX_REACTION_ITERATIONS} iterations.` +
-                          ` Probably there is a cycle in the reactive function: ${allReactions[0]}`
-                    : `[mobx] cycle in reaction: ${allReactions[0]}`
+                `[mobx]循环触发超过100次: ${allReactions[0]}`
             )
             allReactions.splice(0) // clear reactions
         }
@@ -234,7 +207,3 @@ function runReactionsHelper() {
 
 export const isReaction = createInstanceofPredicate("Reaction", Reaction)
 
-export function setReactionScheduler(fn: (f: () => void) => void) {
-    const baseScheduler = reactionScheduler
-    reactionScheduler = f => fn(() => baseScheduler(f))
-}
