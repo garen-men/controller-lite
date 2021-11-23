@@ -1,13 +1,5 @@
-import {
-    isES6Map,
-    isObservableArray,
-    isObservableMap,
-    isES6Set,
-    isObservableSet,
-    hasProp,
-    isFunction,
-    objectPrototype
-} from "../internal"
+import { hasProp, isES6Map, isES6Set, isFunction, objectPrototype } from "./utils"
+
 
 declare const Symbol
 const toString = objectPrototype.toString

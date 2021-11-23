@@ -1,6 +1,9 @@
 
 // we don't use globalState for these in order to avoid possible issues with multiple
 import { getDescriptor } from "../utils/utils"
+import { allowStateReadsEnd, allowStateReadsStart, untrackedEnd, untrackedStart } from "./derivation"
+import { globalState } from "./globalstate"
+import { endBatch, startBatch } from "./observable"
 
 // mobx versions
 let currentActionId = 0
@@ -21,11 +24,6 @@ export function createAction(
     autoAction: boolean = false,
     ref?: Object
 ): Function {
-    if (__DEV__) {
-        if (!isFunction(fn)) die("`action` can only be invoked on functions")
-        if (typeof actionName !== "string" || !actionName)
-            die(`actions should have valid names, got: '${actionName}'`)
-    }
     function res() {
         return executeAction(actionName, autoAction, fn, ref || this, arguments)
     }
@@ -56,10 +54,9 @@ export function executeAction(
 }
 
 export interface IActionRunInfo {
-    prevDerivation_: IDerivation | null
+    prevDerivation_: any
     prevAllowStateChanges_: boolean
     prevAllowStateReads_: boolean
-    notifySpy_: boolean
     startTime_: number
     error_?: any
     parentActionId_: number
@@ -73,18 +70,7 @@ export function _startAction(
     scope: any,
     args?: IArguments
 ): IActionRunInfo {
-    const notifySpy_ = __DEV__ && isSpyEnabled() && !!actionName
     let startTime_: number = 0
-    if (__DEV__ && notifySpy_) {
-        startTime_ = Date.now()
-        const flattenedArgs = args ? Array.from(args) : EMPTY_ARRAY
-        spyReportStart({
-            type: ACTION,
-            name: actionName,
-            object: scope,
-            arguments: flattenedArgs
-        })
-    }
     const prevDerivation_ = globalState.trackingDerivation
     const runAsAction = !canRunAsDerivation || !prevDerivation_
     startBatch()
@@ -99,7 +85,6 @@ export function _startAction(
         prevDerivation_,
         prevAllowStateChanges_,
         prevAllowStateReads_,
-        notifySpy_,
         startTime_,
         actionId_: nextActionId++,
         parentActionId_: currentActionId
@@ -110,7 +95,7 @@ export function _startAction(
 
 export function _endAction(runInfo: IActionRunInfo) {
     if (currentActionId !== runInfo.actionId_) {
-        die(30)
+        //die(30)
     }
     currentActionId = runInfo.parentActionId_
 
@@ -121,9 +106,6 @@ export function _endAction(runInfo: IActionRunInfo) {
     allowStateReadsEnd(runInfo.prevAllowStateReads_)
     endBatch()
     if (runInfo.runAsAction_) untrackedEnd(runInfo.prevDerivation_)
-    if (__DEV__ && runInfo.notifySpy_) {
-        spyReportEnd({ time: Date.now() - runInfo.startTime_ })
-    }
     globalState.suppressReactionErrors = false
 }
 
