@@ -19,7 +19,7 @@
  */
 
 import { createInstanceofPredicate, Lambda } from "../utils/utils"
-import { clearObserving, IDerivation, isCaughtException, shouldCompute, trackDerivedFunction } from "./derivation"
+import { clearObserving, IDerivation, IDerivationState_, isCaughtException, shouldCompute, TraceMode, trackDerivedFunction } from "./derivation"
 import { globalState } from "./globalstate"
 import { endBatch, startBatch } from "./observable"
 import { unstable_batchedUpdates } from "react-dom"
@@ -35,8 +35,8 @@ export interface IReactionDisposer {
 }
 
 export class Reaction{
-    observing_: IObservable[] = [] // nodes we are looking at. Our value depends on these nodes
-    newObserving_: IObservable[] = []
+    observing_ = [] // nodes we are looking at. Our value depends on these nodes
+    newObserving_ = []
     dependenciesState_ = IDerivationState_.NOT_TRACKING_
     diffValue_ = 0
     runId_ = 0
@@ -92,11 +92,10 @@ export class Reaction{
             endBatch()
         }
     }
-
+    // 核心方法 
     track(fn: () => void) {
         if (this.isDisposed_) {
             return
-            // console.warn("Reaction already disposed") // Note: Not a warning / error in mobx 4 either
         }
         startBatch()
         this.isRunning_ = true
@@ -119,17 +118,10 @@ export class Reaction{
             this.errorHandler_(error, this)
             return
         }
-
-        if (globalState.disableErrorBoundaries) throw error
-
-        const message = __DEV__
-            ? `[mobx] Encountered an uncaught exception that was thrown by a reaction or observer component, in: '${this}'`
-            : `[mobx] uncaught error in '${this}'`
+        const message = `[mobx] uncaught error in '${this}'`
         if (!globalState.suppressReactionErrors) {
             console.error(message, error)
-            /** If debugging brought you here, please, read the above message :-). Tnx! */
-        } else if (__DEV__) console.warn(`[mobx] (error in reaction '${this.name_}' suppressed, fix error of causing action below)`) // prettier-ignore
-
+        } 
         globalState.globalReactionErrorHandlers.forEach(f => f(error, this))
     }
 
@@ -155,9 +147,6 @@ export class Reaction{
         return `Reaction[${this.name_}]`
     }
 
-    trace(enterBreakPoint: boolean = false) {
-        trace(this, enterBreakPoint)
-    }
 }
 
 export function onReactionError(handler: (error: any, derivation: IDerivation) => void): Lambda {

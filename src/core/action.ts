@@ -1,23 +1,7 @@
-import {
-    IDerivation,
-    endBatch,
-    globalState,
-    isSpyEnabled,
-    spyReportEnd,
-    spyReportStart,
-    startBatch,
-    untrackedEnd,
-    untrackedStart,
-    isFunction,
-    allowStateReadsStart,
-    allowStateReadsEnd,
-    ACTION,
-    EMPTY_ARRAY,
-    die,
-    getDescriptor
-} from "../internal"
 
 // we don't use globalState for these in order to avoid possible issues with multiple
+import { getDescriptor } from "../utils/utils"
+
 // mobx versions
 let currentActionId = 0
 let nextActionId = 1

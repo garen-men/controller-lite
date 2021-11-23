@@ -1,12 +1,6 @@
-import {
-    IAtom,
-    IDepTreeNode,
-    IObservable,
-    addObserver,
-    globalState,
-    isComputedValue,
-    removeObserver
-} from "../internal"
+import { isComputedValue } from "./computedvalue"
+import { globalState } from "./globalstate"
+import { addObserver, removeObserver } from "./observable"
 
 export enum IDerivationState_ {
     // before being run or (outside batch and not being observed)
@@ -38,9 +32,9 @@ export enum TraceMode {
  * A derivation is everything that can be derived from the state (all the atoms) in a pure manner.
  * See https://medium.com/@mweststrate/becoming-fully-reactive-an-in-depth-explanation-of-mobservable-55995262a254#.xvbh6qd74
  */
-export interface IDerivation extends IDepTreeNode {
-    observing_: IObservable[]
-    newObserving_: null | IObservable[]
+export interface IDerivation {
+    observing_: any
+    newObserving_: any
     dependenciesState_: IDerivationState_
     /**
      * Id of the current run of a derivation. Each time the derivation is tracked
@@ -131,27 +125,12 @@ export function isComputingDerivation() {
     return globalState.trackingDerivation !== null // filter out actions inside computations
 }
 
-export function checkIfStateModificationsAreAllowed(atom: IAtom) {
-    if (!__DEV__) {
-        return
-    }
-    const hasObservers = atom.observers_.size > 0
-    // Should not be possible to change observed state outside strict mode, except during initialization, see #563
-    if (!globalState.allowStateChanges && (hasObservers || globalState.enforceActions === "always"))
-        console.warn(
-            "[MobX] " +
-                (globalState.enforceActions
-                    ? "Since strict-mode is enabled, changing (observed) observable values without using an action is not allowed. Tried to modify: "
-                    : "Side effects like changing state are not allowed at this point. Are you trying to modify state from, for example, a computed value or the render function of a React component? You can wrap side effects in 'runInAction' (or decorate functions with 'action') if needed. Tried to modify: ") +
-                atom.name_
-        )
-}
-
-
 /**
  * Executes the provided function `f` and tracks which observables are being accessed.
  * The tracking information is stored on the `derivation` object and the derivation is registered
  * as observer of any of the accessed observables.
+ * 执行提供的函数“f”，同时跟踪正在访问的可观察对象。
+ * 跟踪信息存储在“派生”对象上，派生被注册为任何访问的可观测对象的观察者。
  */
 export function trackDerivedFunction<T>(derivation: IDerivation, f: () => T, context: any) {
     const prevAllowStateReads = allowStateReadsStart(true)
@@ -178,22 +157,10 @@ export function trackDerivedFunction<T>(derivation: IDerivation, f: () => T, con
     globalState.trackingDerivation = prevTracking
     bindDependencies(derivation)
 
-    warnAboutDerivationWithoutDependencies(derivation)
     allowStateReadsEnd(prevAllowStateReads)
     return result
 }
 
-function warnAboutDerivationWithoutDependencies(derivation: IDerivation) {
-    if (!__DEV__) return
-
-    if (derivation.observing_.length !== 0) return
-
-    if (globalState.reactionRequiresObservable || derivation.requiresObservable_) {
-        console.warn(
-            `[mobx] Derivation '${derivation.name_}' is created/updated without reading any observable value.`
-        )
-    }
-}
 
 /**
  * diffs newObserving with observing.

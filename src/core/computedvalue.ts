@@ -1,3 +1,9 @@
+import { comparer } from "../utils/comparer"
+import { createInstanceofPredicate, Lambda, toPrimitive } from "../utils/utils"
+import { allowStateChangesEnd, allowStateChangesStart, createAction } from "./action"
+import { CaughtException, clearObserving, IDerivationState_, isCaughtException, shouldCompute, TraceMode, trackDerivedFunction, untrackedEnd, untrackedStart } from "./derivation"
+import { globalState } from "./globalstate"
+import { endBatch, propagateChangeConfirmed, propagateMaybeChanged, reportObserved, startBatch } from "./observable"
 
 export interface IComputedValue<T> {
     get(): T
@@ -81,7 +87,6 @@ export class ComputedValue {
      * This is useful for working with vectors, mouse coordinates etc.
      */
     constructor(options) {
-        if (!options.get) die(31)
         this.derivation = options.get!
         this.name_ = options.name || ("ComputedValue")
         if (options.set) {
@@ -123,7 +128,7 @@ export class ComputedValue {
      * Returns the current value of this computed value.
      * Will evaluate its computation first if needed.
      */
-    public get(): T {
+    public get(){
         if (this.isComputing_) die(32, this.name_, this.derivation)
         if (
             globalState.inBatch === 0 &&
@@ -151,7 +156,7 @@ export class ComputedValue {
         return result
     }
 
-    public set(value: T) {
+    public set(value) {
         if (this.setter_) {
             if (this.isRunningSetter_) die(33, this.name_)
             this.isRunningSetter_ = true
@@ -160,7 +165,7 @@ export class ComputedValue {
             } finally {
                 this.isRunningSetter_ = false
             }
-        } else die(34, this.name_)
+        }
     }
 
     trackAndCompute(): boolean {
@@ -187,7 +192,7 @@ export class ComputedValue {
         this.isComputing_ = true
         // don't allow state changes during computation
         const prev = allowStateChangesStart(false)
-        let res: T | CaughtException
+        let res: CaughtException
         if (track) {
             res = trackDerivedFunction(this, this.derivation, this.scope_)
         } else {
@@ -213,9 +218,9 @@ export class ComputedValue {
         }
     }
 
-    observe_(listener: (change: IComputedDidChange<T>) => void, fireImmediately?: boolean): Lambda {
+    observe_(listener: (change: IComputedDidChange) => void, fireImmediately?: boolean): Lambda {
         let firstTime = true
-        let prevValue: T | undefined = undefined
+        let prevValue: any = undefined
         return autorun(() => {
             // TODO: why is this in a different place than the spyReport() function? in all other observables it's called in the same place
             let newValue = this.get()

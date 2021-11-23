@@ -38,7 +38,7 @@ export class MobXGlobals {
     /**
      * Currently running derivation
      */
-    trackingDerivation = null
+    trackingDerivation = null as any
 
     /**
      * Currently running reaction. This determines if we currently have a reactive context.
@@ -68,7 +68,7 @@ export class MobXGlobals {
      *
      * @type {IObservable[]}
      */
-    pendingUnobservations = []
+    pendingUnobservations: any[] = []
 
     /**
      * List of scheduled, not yet executed, reactions.

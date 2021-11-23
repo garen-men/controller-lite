@@ -2,7 +2,19 @@ import { ComputedValue } from "./computedvalue"
 import { IDerivationState_ } from "./derivation"
 import { globalState } from "./globalstate"
 import { runReactions } from "./reaction"
+export function addObserver(observable, node) {
+    observable.observers_.add(node)
+    if (observable.lowestObserverState_ > node.dependenciesState_)
+        observable.lowestObserverState_ = node.dependenciesState_
+}
 
+export function removeObserver(observable, node) {
+    observable.observers_.delete(node)
+    if (observable.observers_.size === 0) {
+        // deleting last observer
+        queueForUnobservation(observable)
+    }
+}
 /**
  * Batch starts a transaction, at least for purposes of memoizing ComputedValues when nothing else does.
  * During a batch `onBecomeUnobserved` will be called at most once per observable.
@@ -75,6 +87,37 @@ export function propagateChanged(observable) {
         }
         d.dependenciesState_ = IDerivationState_.STALE_
     })
+}
+// Called by ComputedValue when it recalculate and its value changed
+export function propagateChangeConfirmed(observable) {
+    // invariantLOS(observable, "confirmed start");
+    if (observable.lowestObserverState_ === IDerivationState_.STALE_) return
+    observable.lowestObserverState_ = IDerivationState_.STALE_
+
+    observable.observers_.forEach(d => {
+        if (d.dependenciesState_ === IDerivationState_.POSSIBLY_STALE_) {
+            d.dependenciesState_ = IDerivationState_.STALE_
+        } else if (
+            d.dependenciesState_ === IDerivationState_.UP_TO_DATE_ // this happens during computing of `d`, just keep lowestObserverState up to date.
+        ) {
+            observable.lowestObserverState_ = IDerivationState_.UP_TO_DATE_
+        }
+    })
+    // invariantLOS(observable, "confirmed end");
+}
+// Used by computed when its dependency changed, but we don't wan't to immediately recompute.
+export function propagateMaybeChanged(observable) {
+    // invariantLOS(observable, "maybe start");
+    if (observable.lowestObserverState_ !== IDerivationState_.UP_TO_DATE_) return
+    observable.lowestObserverState_ = IDerivationState_.POSSIBLY_STALE_
+
+    observable.observers_.forEach(d => {
+        if (d.dependenciesState_ === IDerivationState_.UP_TO_DATE_) {
+            d.dependenciesState_ = IDerivationState_.POSSIBLY_STALE_
+            d.onBecomeStale_()
+        }
+    })
+    // invariantLOS(observable, "maybe end");
 }
 export function queueForUnobservation(observable) {
     if (observable.isPendingUnobservation_ === false) {
