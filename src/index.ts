@@ -12,15 +12,16 @@
 
 import {
     autorun,
-    // toJS,
     makeAutoObservable,
+    // toJS,
 } from "./index-mobx";
 import { observer } from "./index-react";
 
 
-export {
+export default {
     observer,
-    makeAutoObservable,
     autorun,
+    makeAutoObservable,
+
     // toJS
 }

@@ -138,8 +138,8 @@ function eq(a: any, b: any, depth: number, aStack?: any[], bStack?: any[]) {
 }
 
 function unwrap(a: any) {
-    if (isObservableArray(a)) return a.slice()
-    if (isES6Map(a) || isObservableMap(a)) return Array.from(a.entries())
-    if (isES6Set(a) || isObservableSet(a)) return Array.from(a.entries())
+    // if (isObservableArray(a)) return a.slice()
+    // if (isES6Map(a) || isObservableMap(a)) return Array.from(a.entries())
+    // if (isES6Set(a) || isObservableSet(a)) return Array.from(a.entries())
     return a
 }

@@ -1,36 +1,4 @@
-import {
-    IEnhancer,
-    IEqualsComparer,
-    IObservableArray,
-    IObservableMapInitialValues,
-    IObservableSetInitialValues,
-    IObservableValue,
-    ObservableMap,
-    ObservableSet,
-    ObservableValue,
-    asDynamicObservableObject,
-    createObservableArray,
-    deepEnhancer,
-    extendObservable,
-    isES6Map,
-    isES6Set,
-    isObservable,
-    isPlainObject,
-    referenceEnhancer,
-    Annotation,
-    shallowEnhancer,
-    refStructEnhancer,
-    AnnotationsMap,
-    asObservableObject,
-    storeAnnotation,
-    createDecoratorAnnotation,
-    createLegacyArray,
-    globalState,
-    assign,
-    isStringish,
-    createObservableAnnotation,
-    createAutoAnnotation
-} from "../internal"
+import { assign } from "../utils/utils"
 
 export const OBSERVABLE = "observable"
 export const OBSERVABLE_REF = "observable.ref"

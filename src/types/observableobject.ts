@@ -1,7 +1,8 @@
 import { $mobx, Atom } from "../core/atom"
 import { globalState } from "../core/globalstate"
 import { endBatch, startBatch } from "../core/observable"
-import { addHiddenProp, defineProperty, hasProp, isPlainObject, ownKeys } from "../utils/utils"
+import { addHiddenProp, defineProperty, hasProp, isPlainObject, objectPrototype, ownKeys } from "../utils/utils"
+import { autoAnnotation } from "./autoannotation"
 
 
 
@@ -12,11 +13,11 @@ export class ObservableObjectAdministration {
     proxy_: any
     isPlainObject_: boolean
     appliedAnnotations_?: object
-    private pendingKeys_: undefined | Map<PropertyKey, ObservableValue<boolean>>
+    private pendingKeys_;
 
     constructor(
         public target_: any,
-        public values_ = new Map<PropertyKey, ObservableValue<any> | ComputedValue<any>>(),
+        public values_ = new Map(),
         public name_: string,
         // Used anytime annotation is not explicitely provided
         public defaultAnnotation_: Annotation = autoAnnotation
@@ -144,7 +145,6 @@ export class ObservableObjectAdministration {
         if (annotation === false) {
             return
         }
-        assertAnnotable(this, annotation, key)
         if (!(key in this.target_)) {
             // Throw on missing key, except for decorators:
             // Decorator annotations are collected from whole prototype chain.
@@ -189,7 +189,6 @@ export class ObservableObjectAdministration {
         if (annotation === false) {
             return this.defineProperty_(key, descriptor, proxyTrap)
         }
-        assertAnnotable(this, annotation, key)
         const outcome = annotation.extend_(this, key, descriptor, proxyTrap)
         if (outcome) {
             recordAnnotationApplied(this, annotation, key)
