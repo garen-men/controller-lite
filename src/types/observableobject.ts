@@ -1,7 +1,7 @@
 import { $mobx, Atom } from "../core/atom"
 import { globalState } from "../core/globalstate"
-import { endBatch, startBatch } from "../core/observable"
-import { addHiddenProp, defineProperty, hasProp, isPlainObject, objectPrototype, ownKeys } from "../utils/utils"
+import { endBatch, propagateChanged, startBatch } from "../core/observable"
+import { addHiddenProp, defineProperty, getDescriptor, hasProp, isPlainObject, Lambda, objectPrototype, ownKeys } from "../utils/utils"
 import { autoAnnotation } from "./autoannotation"
 
 
@@ -20,7 +20,7 @@ export class ObservableObjectAdministration {
         public values_ = new Map(),
         public name_: string,
         // Used anytime annotation is not explicitely provided
-        public defaultAnnotation_: Annotation = autoAnnotation
+        public defaultAnnotation_ = autoAnnotation
     ) {
         this.keysAtom_ = new Atom("ObservableObject.keys")
         // Optimization: we use this frequently
@@ -154,7 +154,7 @@ export class ObservableObjectAdministration {
             if (this.target_[storedAnnotationsSymbol]?.[key]) {
                 return // will be annotated by subclass constructor
             } else {
-                die(1, annotation.annotationType_, `${this.name_}.${key.toString()}`)
+                //die(1, annotation.annotationType_, `${this.name_}.${key.toString()}`)
             }
         }
         let source = this.target_
@@ -301,7 +301,7 @@ export class ObservableObjectAdministration {
             const observable = new ObservableValue(
                 value,
                 enhancer,
-                __DEV__ ? `${this.name_}.${key.toString()}` : "ObservableObject.key",
+                "ObservableObject.key",
                 false
             )
 
@@ -412,10 +412,6 @@ export class ObservableObjectAdministration {
                 }
             } else {
                 delete this.target_[key]
-            }
-            // Allow re-annotating this field
-            if (__DEV__) {
-                delete this.appliedAnnotations_![key]
             }
             // Clear observable
             if (observable) {
